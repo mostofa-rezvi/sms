@@ -12,8 +12,8 @@ class Constants {
   static const String sim1 = 'SIM1';
   static const String sim2 = 'SIM2';
 
-  static const String defaultServerUrl = 'http://192.168.0.145:8000';
-  static const String suggestedCloudUrl = 'https://api.ctpsms.com';
+  static const String defaultServerUrl = 'https://ctpsms-production.up.railway.app';
+  static const String suggestedCloudUrl = 'https://ctpsms-production.up.railway.app';
 
   static const String channelTelephony = 'com.creativetechpark.ctpsms/telephony';
 

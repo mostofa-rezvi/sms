@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _apiKeyController = TextEditingController(text: widget.settings.apiKey);
     _phoneController = TextEditingController(text: widget.settings.sim1PhoneNumber);
-    _serverUrlController = TextEditingController(text: widget.settings.savedServerUrl);
+    _serverUrlController = TextEditingController(text: widget.settings.serverUrl);
   }
 
   @override
@@ -197,8 +197,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.url,
                         decoration: InputDecoration(
                           labelText: 'Server URL',
-                          hintText: 'e.g. http://192.168.0.145:8000',
-                          helperText: 'Suggestion: http://192.168.0.145:8000',
+                          hintText: 'https://ctpsms-production.up.railway.app',
+                          helperText: 'Default: https://ctpsms-production.up.railway.app',
                           suffixIcon: _serverUrlController.text.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear, size: 18),
@@ -215,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (val != null && val.trim().isNotEmpty) {
                             final uri = Uri.tryParse(val.trim());
                             if (uri == null || !uri.hasScheme) {
-                              return 'Enter a valid URL (e.g. http://192.168.0.145:8000)';
+                              return 'Enter a valid URL (e.g. https://ctpsms-production.up.railway.app)';
                             }
                           }
                           return null;
@@ -263,13 +263,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           ActionChip(
                             avatar: const Icon(Icons.cloud_outlined, size: 14, color: Color(0xFF2196F3)),
-                            label: const Text('ctpsms.com', style: TextStyle(fontSize: 12)),
+                            label: const Text('Railway API', style: TextStyle(fontSize: 12)),
                             backgroundColor: Colors.grey.shade100,
                             side: BorderSide(color: Colors.grey.shade300),
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             onPressed: () {
                               setState(() {
-                                _serverUrlController.text = 'https://api.ctpsms.com';
+                                _serverUrlController.text = 'https://ctpsms-production.up.railway.app';
                               });
                             },
                           ),
