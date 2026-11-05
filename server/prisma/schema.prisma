@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                               String        @id @default(uuid())
+  email                            String        @unique
+  apiKey                           String        @unique @map("api_key")
+  timezone                         String        @default("Asia/Dhaka")
+  activePhoneId                    String?       @map("active_phone_id")
+  subscriptionName                 String        @default("free") @map("subscription_name")
+  subscriptionStatus               String?       @map("subscription_status")
+  notificationMessageStatusEnabled Boolean       @default(true) @map("notification_message_status_enabled")
+  notificationWebhookEnabled       Boolean       @default(true) @map("notification_webhook_enabled")
+  notificationHeartbeatEnabled     Boolean       @default(true) @map("notification_heartbeat_enabled")
+  notificationNewsletterEnabled    Boolean       @default(true) @map("notification_newsletter_enabled")
+  createdAt                        DateTime      @default(now()) @map("created_at")
+  updatedAt                        DateTime      @updatedAt @map("updated_at")
+
+  phones        Phone[]
+  messages      Message[]
+  heartbeats    Heartbeat[]
+  contacts      Contact[]
+  phoneApiKeys  PhoneApiKey[]
+  webhooks      Webhook[]
+  threads       MessageThread[]
+
+  @@map("users")
+}
+
+model Phone {
+  id                               String    @id @default(uuid())
+  userId                           String    @map("user_id")
+  phoneNumber                      String    @map("phone_number")
+  fcmToken                         String?   @db.Text @map("fcm_token")
+  sim                              String    @default("SIM1")
+  messagesPerMinute                Int       @default(1) @map("messages_per_minute")
+  maxSendAttempts                  Int       @default(2) @map("max_send_attempts")
+  messageExpirationSeconds         Int       @default(300) @map("message_expiration_seconds")
+  missedCallAutoReply              String?   @db.Text @map("missed_call_auto_reply")
+  unarchiveThread                  Boolean   @default(false) @map("unarchive_thread")
+  archiveNewOutgoingMessageThreads Boolean   @default(false) @map("archive_new_outgoing_message_threads")
+  createdAt                        DateTime  @default(now()) @map("created_at")
+  updatedAt                        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, phoneNumber])
+  @@index([userId])
+  @@index([phoneNumber])
+  @@map("phones")
+}
+
+model Message {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  requestId         String?   @map("request_id")
+  owner             String    // E.164 phone number of phone sending or receiving
+  contact           String    // E.164 phone number of recipient or remote contact
+  content           String    @db.Text
+  attachments       Json?     // Array of URL strings
+  encrypted         Boolean   @default(false)
+  type              String    @default("mobile-terminated") // mobile-terminated, mobile-originated, call/missed
+  status            String    @default("pending") // pending, sending, sent, delivered, failed, expired
+  sim               String    @default("SIM1")
+  sendDuration      BigInt?   @map("send_duration")
+  requestReceivedAt DateTime  @default(now()) @map("request_received_at")
+  orderTimestamp    DateTime  @default(now()) @map("order_timestamp")
+  sentAt            DateTime? @map("sent_at")
+  deliveredAt       DateTime? @map("delivered_at")
+  failedAt          DateTime? @map("failed_at")
+  expiredAt         DateTime? @map("expired_at")
+  receivedAt        DateTime? @map("received_at")
+  failureReason     String?   @map("failure_reason")
+  sendAttemptCount  Int       @default(0) @map("send_attempt_count")
+  maxSendAttempts   Int       @default(2) @map("max_send_attempts")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([owner])
+  @@index([contact])
+  @@index([status])
+  @@index([orderTimestamp])
+  @@map("messages")
+}
+
+model MessageThread {
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  owner                String
+  contact              String
+  lastMessageContent   String?   @db.Text @map("last_message_content")
+  lastMessageTimestamp DateTime  @default(now()) @map("last_message_timestamp")
+  isArchived           Boolean   @default(false) @map("is_archived")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, owner, contact])
+  @@index([userId])
+  @@index([lastMessageTimestamp])
+  @@map("message_threads")
+}
+
+model Heartbeat {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  owner     String
+  version   String   @default("1.0.0")
+  charging  Boolean  @default(false)
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([owner, timestamp])
+  @@map("heartbeats")
+}
+
+model Contact {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  name         String
+  phoneNumbers Json     @map("phone_numbers") // Array of string
+  emails       Json?    // Array of string
+  properties   Json?    // Key-value pairs
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("contacts")
+}
+
+model PhoneApiKey {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  name         String
+  apiKey       String   @unique @map("api_key")
+  phoneNumbers Json     @map("phone_numbers")
+  phoneIds     Json?    @map("phone_ids")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("phone_api_keys")
+}
+
+model Webhook {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  url          String
+  signingKey   String   @map("signing_key")
+  phoneNumbers Json     @map("phone_numbers")
+  events       Json
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webhooks")
+}
+
